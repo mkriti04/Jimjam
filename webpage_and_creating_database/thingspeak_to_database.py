@@ -17,8 +17,6 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS data (
                   )''')
 conn.commit()
 
-
-
 # Specify the number of entries you want to retrieve
 num_entries = 100
 
@@ -36,11 +34,18 @@ if response.status_code == 200:
         radius = entry[f'field{FIELD_ID}']
         time = entry['created_at']
 
-        # Insert data into the SQLite database
-        cursor.execute("INSERT INTO data (radius, time) VALUES (?, ?)", (radius, time))
-        conn.commit()
+        # Check if the data already exists in the database
+        cursor.execute("SELECT * FROM data WHERE radius = ? AND time = ?", (radius, time))
+        existing_data = cursor.fetchone()
+
+        if not existing_data:
+            # Insert data into the SQLite database
+            cursor.execute("INSERT INTO data (radius, time) VALUES (?, ?)", (radius, time))
+            conn.commit()
+            print(f'Data inserted into the database. Radius: {radius}, Time: {time}')
+        else:
+            print(f'Data already exists in the database. Radius: {radius}, Time: {time}')
 
     conn.close()
-    print('Data inserted into the database.')
 else:
     print(f'Failed to retrieve data. Status code: {response.status_code}')
